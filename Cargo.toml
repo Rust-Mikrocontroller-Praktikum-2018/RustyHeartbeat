@@ -1,0 +1,18 @@
+[package]
+name = "RustyHeartbeat"
+version = "0.1.0"
+authors = ["mspoeri <markus.spoeri@die-softwareklitsche.de>"]
+
+[dependencies]
+cortex-m = "0.1.4"
+r0 = "0.1.0"
+
+[dependencies.stm32f7_discovery]
+git = "https://github.com/embed-rs/stm32f7-discovery.git"
+version = "0.1.0"
+branch = "smoltcp"
+
+[profile]
+
+[profile.release]
+lto = true
