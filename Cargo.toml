@@ -1,5 +1,5 @@
 [package]
-name = "RustyHeartbeat"
+name = "rusty_heartbeat"
 version = "0.1.0"
 authors = ["mspoeri <markus.spoeri@die-softwareklitsche.de>"]
 

@@ -1,12 +1,14 @@
 #![no_std]
 #![no_main]
 #![feature(compiler_builtins_lib)]
-#[macro_use]
 extern crate stm32f7_discovery as stm32f7;
 extern crate compiler_builtins;
 extern crate r0;
 
+mod driver;
+
 use stm32f7::{system_clock, board, embedded};
+use driver::debug_led::*;
 
 #[no_mangle]
 pub unsafe extern "C" fn reset() -> ! {
@@ -40,7 +42,7 @@ pub unsafe extern "C" fn reset() -> ! {
 }
 
 fn main(hw: board::Hardware) -> ! {
-    use embedded::interfaces::gpio::{self, Gpio};
+    use embedded::interfaces::gpio::{Gpio};
 
     let board::Hardware {
         rcc,
@@ -57,6 +59,9 @@ fn main(hw: board::Hardware) -> ! {
         gpio_i,
         gpio_j,
         gpio_k,
+        //adc_1,
+        //adc_2,
+        //adc_3,
         ..
     } = hw;
 
@@ -91,32 +96,53 @@ fn main(hw: board::Hardware) -> ! {
         });
 
     // configure led pin as output pin
-    let led_pin = (gpio::Port::PortB, gpio::Pin::Pin7);
-    let mut led = gpio.to_output(led_pin,
-                                 gpio::OutputType::PushPull,
-                                 gpio::OutputSpeed::Low,
-                                 gpio::Resistor::NoPull)
-        .expect("led pin already in use");
+    // let led_pin = (gpio::Port::PortB, gpio::Pin::Pin7);
+    // let mut led = gpio.to_output(led_pin,
+    //                              gpio::OutputType::PushPull,
+    //                              gpio::OutputSpeed::Low,
+    //                              gpio::Resistor::NoPull)
+    //     .expect("led pin already in use");
 
-    // turn led on
-    led.set(true);
+    // // turn led on
+    // led.set(true);
 
+
+    // let mut last_led_toggle = system_clock::ticks();
+    // loop {
+    //     let ticks = system_clock::ticks();
+    //     // every 0.5 seconds
+    //     if ticks - last_led_toggle >= 500 {
+    //         // toggle the led
+    //         let current_state = led.get();
+    //         led.set(!current_state);
+    //         last_led_toggle = ticks;
+            
+    //         if current_state {
+    //             hprintln!("ON");
+    //         } else {
+    //             hprintln!("OFF");
+    //         }
+    //     }
+    // }
+
+    let mut dbg_leds = driver::debug_led::init(&mut gpio);
 
     let mut last_led_toggle = system_clock::ticks();
-    loop {
+    loop{
         let ticks = system_clock::ticks();
-        // every 0.5 seconds
-        if ticks - last_led_toggle >= 500 {
-            // toggle the led
-            let current_state = led.get();
-            led.set(!current_state);
+         // every 0.5 seconds
+         if ticks - last_led_toggle < 500 {
+            dbg_leds.info_on();
+            dbg_leds.warn_on();
+            dbg_leds.error_on();
+         } else {
+            dbg_leds.info_off();
+            dbg_leds.warn_off();
+            dbg_leds.error_off();
+         }
+        
+        if ticks - last_led_toggle > 1000 {
             last_led_toggle = ticks;
-            
-            if current_state {
-                hprintln!("ON");
-            } else {
-                hprintln!("OFF");
-            }
         }
-    }
+    };
 }
