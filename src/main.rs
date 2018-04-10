@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(compiler_builtins_lib)]
 extern crate stm32f7_discovery as stm32f7;
-extern crate compiler_builtins;
 extern crate r0;
 extern crate embedded_stm32f7;
 
