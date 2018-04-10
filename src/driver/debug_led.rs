@@ -1,102 +1,110 @@
 use stm32f7::embedded::interfaces::gpio;
 use stm32f7::embedded::interfaces::gpio::*;
 
+static mut INFO: Option<DebugLed> = None;
+static mut WARN: Option<DebugLed> = None;
+static mut ERROR: Option<DebugLed> = None;
+
 trait LedFunctions {
     fn on(&mut self);
     fn off(&mut self);
 }
 
-struct Led{
+pub struct DebugLed {
     led_pin: OutputPin,
 }
 
-impl LedFunctions for Led{
-    fn on(&mut self){
+impl LedFunctions for DebugLed {
+    fn on(&mut self) {
         self.led_pin.set(true);
     }
 
-    fn off(&mut self){
+    fn off(&mut self) {
         self.led_pin.set(false);
     }
 }
 
-pub trait DebugLedFunctions {
-   fn info_on(&mut self);
-   fn info_off(&mut self);
+impl DebugLed {
+    pub fn init(gpio: &mut Gpio) {
+        let led_red_pin_port;
+        let led_blue_pin_port;
+        let led_green_pin_port;
 
-   fn warn_on(&mut self);
-   fn warn_off(&mut self);
+        let led_red;
+        let led_blue;
+        let led_green;
 
-   fn error_on(&mut self);
-   fn error_off(&mut self);
-}
+        led_red_pin_port = (gpio::Port::PortB, gpio::Pin::Pin14);
+        led_blue_pin_port = (gpio::Port::PortB, gpio::Pin::Pin7);
+        led_green_pin_port = (gpio::Port::PortB, gpio::Pin::Pin0);
 
-pub struct DebugLeds {
-    info : Led,
-    warn : Led,
-    error : Led,
-}
 
-impl DebugLedFunctions for DebugLeds {
-   fn info_on(&mut self){
-        self.info.on();
+        led_red = gpio.to_output(led_red_pin_port,
+                                 gpio::OutputType::PushPull,
+                                 gpio::OutputSpeed::Low,
+                                 gpio::Resistor::NoPull).expect("led pin already in use");
+
+        led_blue = gpio.to_output(led_blue_pin_port,
+                                  gpio::OutputType::PushPull,
+                                  gpio::OutputSpeed::Low,
+                                  gpio::Resistor::NoPull).expect("led pin already in use");
+
+        led_green = gpio.to_output(led_green_pin_port,
+                                   gpio::OutputType::PushPull,
+                                   gpio::OutputSpeed::Low,
+                                   gpio::Resistor::NoPull).expect("led pin already in use");
+        unsafe {
+            INFO = Some(DebugLed { led_pin: led_green });
+            WARN = Some(DebugLed { led_pin: led_blue });
+            ERROR = Some(DebugLed { led_pin: led_red });
+        }
     }
 
-   fn info_off(&mut self){
-        self.info.off();
+    pub fn info_on() {
+        unsafe {
+            DebugLed::on(&mut INFO);
+        }
     }
 
-   fn warn_on(&mut self){
-        self.warn.on();
+    pub fn info_off() {
+        unsafe {
+            DebugLed::off(&mut INFO);
+        }
     }
 
-   fn warn_off(&mut self){
-        self.warn.off();
+    pub fn warn_on() {
+        unsafe {
+            DebugLed::on(&mut WARN);
+        }
     }
 
-   fn error_on(&mut self){
-        self.error.on();
+    pub fn warn_off() {
+        unsafe {
+            DebugLed::off(&mut WARN);
+        }
     }
 
-   fn error_off(&mut self){
-        self.error.off();
+    pub fn error_on() {
+        unsafe {
+            DebugLed::on(&mut ERROR);
+        }
     }
-}
 
-pub fn init(gpio :&mut Gpio) -> DebugLeds{
-    let led_red_pin_port;
-    let led_blue_pin_port;
-    let led_green_pin_port;
+    pub fn error_off() {
+        unsafe {
+            DebugLed::off(&mut ERROR);
+        }
+    }
 
-    let led_red;
-    let led_blue;
-    let led_green;
+    pub fn on(led_option: &mut Option<DebugLed>) {
+        if let Some(ref mut led) = led_option {
+            led.on();
+        }
+    }
 
-    led_red_pin_port = (gpio::Port::PortB, gpio::Pin::Pin14);
-    led_blue_pin_port = (gpio::Port::PortB, gpio::Pin::Pin7);
-    led_green_pin_port = (gpio::Port::PortB, gpio::Pin::Pin0);
-
-
-    led_red = gpio.to_output(led_red_pin_port,
-                             gpio::OutputType::PushPull,
-                             gpio::OutputSpeed::Low,
-                             gpio::Resistor::NoPull).expect("led pin already in use");
-                   
-    led_blue = gpio.to_output(led_blue_pin_port,
-                              gpio::OutputType::PushPull,
-                              gpio::OutputSpeed::Low,
-                              gpio::Resistor::NoPull).expect("led pin already in use");
-
-    led_green = gpio.to_output(led_green_pin_port,
-                               gpio::OutputType::PushPull,
-                               gpio::OutputSpeed::Low,
-                               gpio::Resistor::NoPull).expect("led pin already in use");
-
-    let leds :DebugLeds;
-
-    leds = DebugLeds{info: Led{led_pin:led_green},
-                     warn: Led{led_pin:led_blue}, 
-                     error:Led{led_pin:led_red}}; 
-
-    return leds
+    pub fn off(led_option: &mut Option<DebugLed>) {
+        if let Some(ref mut led) = led_option {
+            led.off();
+        }
+    }
 }

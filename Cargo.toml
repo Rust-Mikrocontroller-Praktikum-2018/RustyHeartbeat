@@ -12,6 +12,9 @@ git = "https://github.com/embed-rs/stm32f7-discovery.git"
 version = "0.1.0"
 branch = "smoltcp"
 
+[dependencies.embedded_stm32f7]
+git = "https://github.com/embed-rs/embedded_stm32f7.git"
+
 [profile]
 
 [profile.release]
