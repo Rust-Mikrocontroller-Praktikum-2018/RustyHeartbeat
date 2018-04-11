@@ -1,5 +1,7 @@
 #![no_std]
 #![no_main]
+
+#[macro_use]
 extern crate stm32f7_discovery as stm32f7;
 extern crate r0;
 extern crate embedded_stm32f7;
@@ -42,7 +44,7 @@ pub unsafe extern "C" fn reset() -> ! {
 }
 
 fn main(hw: board::Hardware) -> ! {
-    use embedded::interfaces::gpio::Gpio;
+    use embedded::interfaces::gpio::*;
 
     let board::Hardware {
         rcc,
@@ -65,19 +67,16 @@ fn main(hw: board::Hardware) -> ! {
         ..
     } = hw;
 
-    let mut gpio = Gpio::new(gpio_a,
-                             gpio_b,
-                             gpio_c,
-                             gpio_d,
-                             gpio_e,
-                             gpio_f,
-                             gpio_g,
-                             gpio_h,
-                             gpio_i,
-                             gpio_j,
-                             gpio_k);
-
     system_clock::init(rcc, pwr, flash);
+
+    
+    // Enable ADC clocks
+    rcc.apb2enr
+        .update(|r| {
+            r.set_adc1en(true);
+            r.set_adc2en(true);
+            r.set_adc3en(true);
+        });
 
     // enable all gpio ports
     rcc.ahb1enr
@@ -95,13 +94,28 @@ fn main(hw: board::Hardware) -> ! {
             r.set_gpioken(true);
         });
 
-    // Enable ADC clocks
-    rcc.apb2enr
-        .update(|r| {
-            r.set_adc1en(true);
-            r.set_adc2en(true);
-            r.set_adc3en(true);
-        });
+    
+    let addr = 0x40020000 as *mut u32;
+    let x = unsafe {core::ptr::read_volatile(addr)};
+    hprintln!("1: {:X}", x);
+    unsafe {core::ptr::write_volatile(addr, 0xA80000FF)};
+    hprintln!("Lesen"); 
+    let x = unsafe {core::ptr::read_volatile(addr)};
+    hprintln!("2: {:X}", x);
+
+    let mut gpio = Gpio::new(gpio_a,
+                             gpio_b,
+                             gpio_c,
+                             gpio_d,
+                             gpio_e,
+                             gpio_f,
+                             gpio_g,
+                             gpio_h,
+                             gpio_i,
+                             gpio_j,
+                             gpio_k);
+
+
 
     // configure led pin as output pin
 //     let adc_pin = (gpio::Port::PortB, gpio::Pin::Pin7);
@@ -136,36 +150,15 @@ fn main(hw: board::Hardware) -> ! {
     // }
 
     DebugLed::init(&mut gpio);
+
     system_clock::wait(500);
     DebugLed::error_on();
     let mut adc = Adc::new(adc_1);
     loop {
-        let ticks = system_clock::ticks();
-        // every 0.5 seconds
-        if ticks - last_led_toggle < 500 {
-            DebugLed::error_on();
-        } else {
-            DebugLed::error_off();
-        }
 
-        for i in 0..16 {
-            let current_sample = adc.sample(i);
-            if current_sample > 100 {
-                DebugLed::warn_on();
-                system_clock::wait(1000);
-            }
-        }
-        let current_sample;
-
-        current_sample = adc.sample(3);
-        if current_sample > 100 {
-            DebugLed::warn_on();
-        } else {
-            DebugLed::warn_off();
-        }
-
-        if ticks - last_led_toggle > 1000 {
-            last_led_toggle = ticks;
+        for i in 3..4 {
+            let current_sample = adc.sample(3);
+            hprintln!("Channel: {} - Wert: {}", i, current_sample);
         }
     };
 }
