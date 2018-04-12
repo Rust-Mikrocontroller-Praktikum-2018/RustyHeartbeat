@@ -1,5 +1,5 @@
-use embedded_stm32f7::adc::Adc as EmbeddedAdc;
 use driver::debug_led::*;
+use embedded_stm32f7::adc::Adc as EmbeddedAdc;
 use stm32f7::system_clock;
 
 pub struct Adc {
@@ -67,7 +67,7 @@ impl Adc {
             cr2.set_adon(true);
         });
 
-        adc.sqr1.update(|sqr1| { sqr1.set_l(0x00) });
+        adc.sqr1.update(|sqr1| sqr1.set_l(0x00));
 
         adc.smpr1.update(|smpr1| {
             //Sample with 84 cycles
@@ -124,14 +124,13 @@ impl Adc {
         // Start conversion
         adc.cr2.update(|cr2| cr2.set_swstart(true));
 
-
-        while adc.cr2.read().swstart() {};
+        while adc.cr2.read().swstart() {}
 
         if adc.sr.read().strt() {
             DebugLed::info_on();
         }
 
-        while !adc.sr.read().eoc() {};
+        while !adc.sr.read().eoc() {}
 
         DebugLed::info_off();
 

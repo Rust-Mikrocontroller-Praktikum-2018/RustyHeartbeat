@@ -38,21 +38,26 @@ impl DebugLed {
         led_blue_pin_port = (gpio::Port::PortB, gpio::Pin::Pin7);
         led_green_pin_port = (gpio::Port::PortB, gpio::Pin::Pin0);
 
+        led_red = gpio.to_output(
+            led_red_pin_port,
+            gpio::OutputType::PushPull,
+            gpio::OutputSpeed::Low,
+            gpio::Resistor::NoPull,
+        ).expect("led pin already in use");
 
-        led_red = gpio.to_output(led_red_pin_port,
-                                 gpio::OutputType::PushPull,
-                                 gpio::OutputSpeed::Low,
-                                 gpio::Resistor::NoPull).expect("led pin already in use");
+        led_blue = gpio.to_output(
+            led_blue_pin_port,
+            gpio::OutputType::PushPull,
+            gpio::OutputSpeed::Low,
+            gpio::Resistor::NoPull,
+        ).expect("led pin already in use");
 
-        led_blue = gpio.to_output(led_blue_pin_port,
-                                  gpio::OutputType::PushPull,
-                                  gpio::OutputSpeed::Low,
-                                  gpio::Resistor::NoPull).expect("led pin already in use");
-
-        led_green = gpio.to_output(led_green_pin_port,
-                                   gpio::OutputType::PushPull,
-                                   gpio::OutputSpeed::Low,
-                                   gpio::Resistor::NoPull).expect("led pin already in use");
+        led_green = gpio.to_output(
+            led_green_pin_port,
+            gpio::OutputType::PushPull,
+            gpio::OutputSpeed::Low,
+            gpio::Resistor::NoPull,
+        ).expect("led pin already in use");
         unsafe {
             INFO = Some(DebugLed { led_pin: led_green });
             WARN = Some(DebugLed { led_pin: led_blue });
