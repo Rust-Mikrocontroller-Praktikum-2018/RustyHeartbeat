@@ -1,20 +1,19 @@
 #![no_std]
 #![no_main]
 
-#[macro_use]
-extern crate stm32f7_discovery as stm32f7;
 extern crate embedded_stm32f7;
 extern crate r0;
-
-mod circular_buffer;
-mod driver;
-mod filter;
-mod heartbeat_writer;
+extern crate stm32f7_discovery as stm32f7;
 
 use driver::adc::*;
 use filter::Filter;
 use heartbeat_writer::HeartBeatWriter;
 use stm32f7::{board, embedded, lcd, sdram, system_clock};
+
+mod circular_buffer;
+mod driver;
+mod filter;
+mod heartbeat_writer;
 
 #[no_mangle]
 pub unsafe extern "C" fn reset() -> ! {
@@ -95,11 +94,6 @@ fn main(hw: board::Hardware) -> ! {
         r.set_gpioken(true);
     });
 
-    // Set GPIO Pin to analog
-    let addr = 0x40020000 as *mut u32;
-    let x = unsafe { core::ptr::read_volatile(addr) };
-    unsafe { core::ptr::write_volatile(addr, x | 0b11) };
-
     let mut gpio = Gpio::new(
         gpio_a, gpio_b, gpio_c, gpio_d, gpio_e, gpio_f, gpio_g, gpio_h, gpio_i, gpio_j, gpio_k,
     );
@@ -116,7 +110,16 @@ fn main(hw: board::Hardware) -> ! {
     layer_2.clear();
     lcd::init_stdout(layer_2);
 
-    let mut adc = Adc::new(adc_3);
+    let sample_pin: AdcPin;
+    sample_pin = AdcPin::new(
+        0x40020000,
+        stm32f7::embedded::components::gpio::stm32f7::Pin::Pin0,
+        AdcChannel::Channel0,
+    );
+
+    let adc_pins = [sample_pin];
+
+    let mut adc = Adc::new(adc_3, &adc_pins);
     let mut heart_beat_writer = HeartBeatWriter::new(layer_1, lcd::WIDTH);
     let b = [
         4.31490887804179e-06,
